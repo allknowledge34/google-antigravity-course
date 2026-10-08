@@ -771,7 +771,7 @@ streamlit run app.py
 
 **Google Antigravity Full Course 2026**
 
-[Watch the Complete Course](https://www.youtube.com/)
+[Watch the Complete Course]([https://www.youtube.com/](https://youtu.be/QQ_OmvcccNg?si=n8N48H1P45HJEs-Y))
 
 ### 📂 Source Code
 
