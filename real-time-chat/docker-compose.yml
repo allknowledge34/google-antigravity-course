@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: chat_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017" # Exposed for local dev access, can be restricted in true prod
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=real-time-chat
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chat_network
+
+  redis:
+    image: redis:alpine
+    container_name: chat_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379" # Exposed for local dev access
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chat_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chat_backend
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/real-time-chat
+      - REDIS_URL=redis://redis:6379
+      - FRONTEND_URL=http://localhost:5173
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - TRUST_PROXY=1
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - chat_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_CLERK_PUBLISHABLE_KEY=${VITE_CLERK_PUBLISHABLE_KEY}
+        - VITE_API_URL=http://localhost:5001/api/v1
+    container_name: chat_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80" # Map 5173 to Nginx 80 to match local dev expectation
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - chat_network
+
+networks:
+  chat_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  redis_data:

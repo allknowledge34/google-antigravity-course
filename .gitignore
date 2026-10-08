@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+build/
+out/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Android / Gradle
+.gradle/
+local.properties
+*.iml
+.cxx/
+
+# Android Studio / IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
